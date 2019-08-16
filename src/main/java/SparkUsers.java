@@ -6,9 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-
 import static spark.Spark.*;
-
 public class SparkUsers {
     public static void main(String[] args) {
         port(8095);
@@ -23,7 +21,6 @@ public class SparkUsers {
         }
         User[] usersList = gson.fromJson(readerUsers, User[].class);
         //System.out.println(new Gson().toJsonTree(usersList));
-
         for (int i = 0; i < usersList.length; i++) {
             try {
                 service.addUser(usersList[i]);
@@ -31,12 +28,11 @@ public class SparkUsers {
                 e.printStackTrace();
             }
         }
-
-        get("/users/sites", (req,res) -> {
-            res.type("application/json");
-            JSONObject getJSon = new JSONObject(req.body().toString());
-            String usernameReq = getJSon.getString("username");
-            String tokenReq = getJSon.getString("token");
+        get("/users/sites/:username/:token", (req,res) -> {
+            //res.type("application/json");
+            //JSONObject getJSon = new JSONObject(req.body().toString());
+            String usernameReq = req.params("username");//getJSon.getString("username");
+            String tokenReq = req.params("token");//getJSon.getString("token");
             //System.out.println(usernameReq);
             if (service.getUser(usernameReq).getToken().equals(tokenReq)) {
                 try {
@@ -50,7 +46,6 @@ public class SparkUsers {
                             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                             Gson gsonSites = new Gson();
                             Site[] sites = gsonSites.fromJson(in, Site[].class);
-
                             return new Gson().toJsonTree(sites);
                         } else {
                             //System.out.println("URL INVALIDA.");
@@ -64,21 +59,15 @@ public class SparkUsers {
                     System.out.println(exception.getMessage());
                     return new Gson().toJson(new StandardResponse(StatusResponse.ERROR, exception.getMessage()));
                 }
-
-
-
             } else {
                 return new Gson().toJson(new StandardResponse(StatusResponse.ERROR, "PETICION INVALIDA"));
             }
         });
-
-
         post("/users", (req,res) -> {
             res.type("application/json");
             User userPassword = new Gson().fromJson(req.body(), User.class);
             String username = userPassword.getUsername();
             String password = userPassword.getPassword();
-
             if (service.userExsits(username)) {
                 if (service.getUser(username).getPassword().equals(password)){
                     double random = Math.random();
@@ -86,23 +75,21 @@ public class SparkUsers {
                     int token = (int) random;
                     userPassword.setToken(String.valueOf(token));
                     service.updateUser(username,userPassword);
-                    return new Gson().toJson(new StandardResponse(StatusResponse.SUCCESS, new Gson().toJsonTree(service.getUser(username))));
+                    return new Gson().toJsonTree(service.getUser(username));
                 }else{
                     return new Gson().toJson(new StandardResponse(StatusResponse.ERROR,"PASSWORD INCORRECTA"));
                 }
             }else{
                 return new Gson().toJson(new StandardResponse(StatusResponse.ERROR,"USUARIO NO EXISTE"));
             }
-
         });
-
-
-        get("/users/sites/:id/categories", (req,res) -> {
+        get("/users/sites/:id/categories/:username/:token", (req,res) -> {
             res.type("application/json");
             JSONObject getJSon = new JSONObject(req.body().toString());
-            String usernameReq = getJSon.getString("username");
-            String tokenReq = getJSon.getString("token");
-
+            //String usernameReq = getJSon.getString("username");
+            //String tokenReq = getJSon.getString("token");
+            String usernameReq = req.params("username");//getJSon.getString("username");
+            String tokenReq = req.params("token");//getJSon.getString("token");
             //System.out.println(usernameReq);
             if (service.getUser(usernameReq).getToken().equals(tokenReq)) {
                 try {
@@ -116,7 +103,6 @@ public class SparkUsers {
                             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                             Gson gsonSites = new Gson();
                             Site[] categories = gsonSites.fromJson(in, Site[].class);
-
                             return new Gson().toJsonTree(categories);
                         } else {
                             System.out.println("URL INVALIDA.");
